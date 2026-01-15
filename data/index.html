@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mycelium Live</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; text-align: center; }
+        .val-box { font-size: 3em; color: #00ff88; margin: 20px; }
+        button { padding: 15px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer;}
+        button:active { background: #666; }
+    </style>
+</head>
+<body>
+    <h1>Lab Monitor</h1>
+    <div>Temp: <span id="t" class="val-box">--</span>°C</div>
+    <div>Hum: <span id="h" class="val-box">--</span>%</div>
+    <hr>
+    <button onclick="sendCmd('toggle_relay')">Toggle Humidifier</button>
+
+    <script>
+        var gateway = `ws://${window.location.hostname}/ws`;
+        var websocket = new WebSocket(gateway);
+
+        websocket.onmessage = function(event) {
+            var data = JSON.parse(event.data);
+            if(data.temp) document.getElementById('t').innerHTML = data.temp;
+            if(data.hum) document.getElementById('h').innerHTML = data.hum;
+        };
+
+        function sendCmd(msg) { websocket.send(msg); }
+    </script>
+</body>
+</html>
