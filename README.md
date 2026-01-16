@@ -18,9 +18,26 @@ A asynchronous ESP32-based environmental controller designed for mycelium cultiv
 ## 🛠️ Hardware Requirements
 
 * **Microcontroller**: ESP32 (Feather or DevKit).
-* **Sensor**: DHT22 or SHT3x (Humidity & Temperature).
+* **Sensor**: **AM2315C / AHT2x** (High-precision I2C Humidity & Temperature).
 * **Actuator**: 5V Relay Module (Optoisolated recommended).
-* **Power**: AC Humidifier.
+* **Power**: AC Humidifier & Ventilation Fan.
+
+---
+
+## 📊 Project Status & Roadmap
+
+### ✅ Completed
+
+* **Sensor Communication**: Custom I2C driver for AM2315C (AHT2x) implemented with 20-bit precision and status-bit polling.
+* **WiFi Infrastructure**: Captive portal and Hotspot management logic ready.
+* **Core Logic**: Asynchronous structure for non-blocking environmental monitoring.
+
+### 🚧 Missing / In Progress
+
+* **Sensor to Webpage**: Integration of the JSON payload into the WebSocket broadcast stream.
+* **Fan Control**: Implementation of the CO2/Fresh Air Exchange (FAE) logic and relay trigger.
+* **Humidifier Control**: Finalizing the bang-bang (hysteresis) logic for the moisture relay.
+* **Web Dashboard**: Completion of the HTML/JavaScript UI to visualize data in real-time.
 
 ---
 
@@ -30,7 +47,8 @@ A asynchronous ESP32-based environmental controller designed for mycelium cultiv
 .
 ├── data/                  # Web Dashboard (HTML/CSS)
 ├── lib/                   
-│   └── HotspotServerManager/ # Custom Library for WiFi/Web
+│   ├── HotspotServerManager/ # Custom Library for WiFi/Web
+│   └── AM2315CSensor/        # Custom AM2315C/AHT2x I2C Driver
 ├── src/                   
 │   └── main.cpp           # Main Control Logic
 └── platformio.ini         # Environment & Dependency config
@@ -49,8 +67,6 @@ Ensure your `platformio.ini` includes:
 lib_deps =
     bblanchon/ArduinoJson @ ^6.21.3
     https://github.com/me-no-dev/ESPAsyncWebServer.git
-    https://github.com/me-no-dev/AsyncTCP.git
-    adafruit/DHT sensor library
 
 ```
 
@@ -89,6 +105,6 @@ This project involves interfacing with AC mains power.
 
 This project is licensed under the **GNU General Public License v3.0**.
 See the [LICENSE](https://www.google.com/search?q=LICENSE) file for the full text.
-Copyright (C) 2026 [Your Name/Group Name].
+Copyright (C) 2026 Joaquin Vasquez Romo.
 
 ---
