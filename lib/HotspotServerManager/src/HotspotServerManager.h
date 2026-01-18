@@ -33,6 +33,7 @@ public:
     
     // Send data to the web page (e.g., {"temp": 25.5, "hum": 90})
     void broadcastData(String jsonPayload);
+    void broadcastData(JsonDocument & jsonPayload);
     
     // Register a function to handle clicks from the web page
     void onCommand(CommandCallback cb);

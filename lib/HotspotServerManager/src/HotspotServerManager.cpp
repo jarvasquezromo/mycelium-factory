@@ -43,6 +43,12 @@ void HotspotServerManager::begin(const char* ssid, const char* password, const c
 void HotspotServerManager::broadcastData(String jsonPayload) {
     _ws.textAll(jsonPayload);
 }
+void HotspotServerManager::broadcastData(JsonDocument & jsonPayload) {
+    String jsonString;
+    serializeJson(jsonPayload, jsonString);
+
+    this->broadcastData (jsonString);
+}
 
 void HotspotServerManager::onCommand(CommandCallback cb) {
     _onCommand = cb;
