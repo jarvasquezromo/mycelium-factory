@@ -1,47 +1,81 @@
-#include <Arduino.h>
+/*
+ * Copyright (C) 2026  Joaquin Vasquez Romo
+ * * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
+#include <Arduino.h>
+#include <ArduinoJson.h>
+
+#include "config.h"
+#include "params.h"
 #include "AM2315CSensor.h"
 #include "HotspotServerManager.h"
+#include "HysteresisController.h"
 
 /* Classes Initialization */
+// Params
+ParamManager p;
 // Tempeture and Humidity sensor
-AM2315CSensor sensor(0x44);
+AM2315CSensor sensor(Config::HUM_ADDRESS);
 // Wifi manager
 HotspotServerManager wifi_manager;
+// Humidifier controller
+HysteresisController humidifier(Config::PIN_HUM);
 
 /* Variable Definitions */ 
 // Variables of the program
 unsigned long lastUpdate = 0;
 
 /* Functions Declarations */
-bool handleSensorData(String json_type);
+bool handleSensorData(JsonDocument & data);
 void handleWebCommand(String type, String msg);
 
 void setup() {
-    Serial.begin(115200);
+    // initiate parameter
+    p.begin();
+
+    // Initialize humidifier
+    humidifier.begin();
+    humidifier.setThreshols (p.lowerThHumidifier, p.upperThHumidifier);
+
+    Serial.begin(Config::BAUDRATE_SERIAL);
     // Initialize: SSID, Password, Path to HTML
-    wifi_manager.begin("Mycelium-Lab", "spores123", "/index.html");
+    wifi_manager.begin(Config::DEFAULT_SSID, Config::DEFAULT_PASS, "/index.html");
     
     // Attach the callback function
     wifi_manager.onCommand(handleWebCommand);
 
-    if (!sensor.begin(21, 22)) {
+    if (!sensor.begin(Config::PIN_SDA, Config::PIN_SCL)) {
         Serial.println("Sensor not found!");
     }
 }
 
 void loop() {
-    // Send data every 2 seconds
-    if (millis() - lastUpdate > 2000) {
+    // Send data every interval
+    if (millis() - lastUpdate > Config::SENSOR_INTERVAL) {
         
         // Create a JSON
-        String json;
+        JsonDocument json_data;
 
         // Get values of the sensor
-        handleSensorData(json);
+        handleSensorData(json_data);
+
+        // Update controller
+        humidifier.update (json_data["hum"].toFloat());
 
         // Write data
-        wifi_manager.broadcastData(json);
+        wifi_manager.broadcastData(json_data);
         lastUpdate = millis();
     }
 }
@@ -54,17 +88,15 @@ void handleWebCommand(String type, String msg) {
     }
 }
 
-bool handleSensorData(String json_type) {
+bool handleSensorData(JsonDocument & data) {
     if (sensor.readSample() == ESP_OK) {
-        json_type += "\"temp\":\"" + String(sensor.getTemperature(), 1) + "\",";
-        json_type += "\"hum\":\"" + String(sensor.getHumidity(), 1) + "\",";
-        json_type += "\"status\":\"ok\",";
-        
-        // Output: {"temp":24.5,"hum":88.2,"status":"ok"}
-        Serial.println(json_type); 
+        data["temp"] = String(sensor.getTemperature(), 1);
+        data["hum"] = String(sensor.getHumidity(), 1);
+        data["status"] = "ok";
+
         return true;
     } else {
-        json_type += "\"status\":\"error\",";
+        data["status"] = "error";
         Serial.println("Error on sensor");
         return false;
     }

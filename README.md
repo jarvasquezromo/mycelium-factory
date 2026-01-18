@@ -31,10 +31,10 @@ A asynchronous ESP32-based environmental controller designed for mycelium cultiv
 * **Sensor Communication**: Custom I2C driver for AM2315C (AHT2x) implemented with 20-bit precision and status-bit polling.
 * **WiFi Infrastructure**: Captive portal and Hotspot management logic ready.
 * **Core Logic**: Asynchronous structure for non-blocking environmental monitoring.
+* **Sensor to Webpage**: Integration of the JSON payload into the WebSocket broadcast stream.
 
 ### 🚧 Missing / In Progress
 
-* **Sensor to Webpage**: Integration of the JSON payload into the WebSocket broadcast stream.
 * **Fan Control**: Implementation of the CO2/Fresh Air Exchange (FAE) logic and relay trigger.
 * **Humidifier Control**: Finalizing the bang-bang (hysteresis) logic for the moisture relay.
 * **Web Dashboard**: Completion of the HTML/JavaScript UI to visualize data in real-time.
@@ -46,9 +46,13 @@ A asynchronous ESP32-based environmental controller designed for mycelium cultiv
 ```text
 .
 ├── data/                  # Web Dashboard (HTML/CSS)
+├── include/               
+│   ├── Config.h           # Hardware Pins & Static Parameters
+│   └── Parmas.h           # User Parameters
 ├── lib/                   
 │   ├── HotspotServerManager/ # Custom Library for WiFi/Web
-│   └── AM2315CSensor/        # Custom AM2315C/AHT2x I2C Driver
+│   ├── AM2315CSensor/        # Custom AM2315C/AHT2x I2C Driver
+│   └── HysteresisController/ # Bang-Bang Logic (Manual & Auto)
 ├── src/                   
 │   └── main.cpp           # Main Control Logic
 └── platformio.ini         # Environment & Dependency config
@@ -65,7 +69,7 @@ Ensure your `platformio.ini` includes:
 
 ```ini
 lib_deps =
-    bblanchon/ArduinoJson @ ^6.21.3
+    bblanchon/ArduinoJson @ ^7.0.0
     https://github.com/me-no-dev/ESPAsyncWebServer.git
 
 ```
