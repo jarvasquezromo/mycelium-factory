@@ -5,14 +5,31 @@
     <style>
         body { font-family: sans-serif; background: #1a1a1a; color: #eee; text-align: center; }
         .val-box { font-size: 3em; color: #00ff88; margin: 20px; }
+        
+        /* LED Styling */
+        .led-container { display: flex; align-items: center; justify-content: center; margin: 20px; gap: 10px; }
+        .led-bulb { 
+            width: 20px; height: 20px; border-radius: 50%; 
+            background: #333; box-shadow: 0 0 5px #000;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .led-on { background: #00ff88; box-shadow: 0 0 15px #00ff88; }
+        
         button { padding: 15px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer;}
         button:active { background: #666; }
     </style>
 </head>
 <body>
     <h1>Lab Monitor</h1>
+    
     <div>Temp: <span id="t" class="val-box">--</span>°C</div>
     <div>Hum: <span id="h" class="val-box">--</span>%</div>
+
+    <div class="led-container">
+        <span>Humidifier Status:</span>
+        <div id="led" class="led-bulb"></div>
+    </div>
+
     <hr>
     <button onclick="sendCmd('toggle_relay')">Toggle Humidifier</button>
 
@@ -22,8 +39,20 @@
 
         websocket.onmessage = function(event) {
             var data = JSON.parse(event.data);
+            
+            // Update sensor values
             if(data.temp) document.getElementById('t').innerHTML = data.temp;
             if(data.hum) document.getElementById('h').innerHTML = data.hum;
+            
+            // Update LED state (expects data.relayState to be true/false or 1/0)
+            if(data.hasOwnProperty('relayState')) {
+                var led = document.getElementById('led');
+                if(data.relayState == 1 || data.relayState == true) {
+                    led.classList.add('led-on');
+                } else {
+                    led.classList.remove('led-on');
+                }
+            }
         };
 
         function sendCmd(msg) { websocket.send(msg); }

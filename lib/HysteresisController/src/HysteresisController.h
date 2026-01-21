@@ -30,6 +30,7 @@ public:
     
     void setMode(ControllerMode m);
     void setManualPower(bool on);
+    void tonggleManualPower();
     void setThresholds(float low, float high);
 
     bool isActive() const;

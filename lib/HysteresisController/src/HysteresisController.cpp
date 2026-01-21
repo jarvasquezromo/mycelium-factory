@@ -22,6 +22,7 @@ void HysteresisController::update(float currentReading) {
 
 void HysteresisController::setMode(ControllerMode m) { _mode = m; }
 void HysteresisController::setManualPower(bool on) { _manualState = on; }
+void HysteresisController::tonggleManualPower() { _manualState = !_manualState; }
 void HysteresisController::setThresholds(float low, float high) {
     _targetLow = low;
     _targetHigh = high;

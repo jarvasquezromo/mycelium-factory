@@ -39,6 +39,7 @@ unsigned long lastUpdate = 0;
 
 /* Functions Declarations */
 bool handleSensorData(JsonDocument & data);
+void handleHumidifierData(JsonDocument & data);
 void handleWebCommand(String type, String msg);
 
 void setup() {
@@ -47,7 +48,7 @@ void setup() {
 
     // Initialize humidifier
     humidifier.begin();
-    humidifier.setThreshols (p.lowerThHumidifier, p.upperThHumidifier);
+    humidifier.setThresholds (p.lowerThHumidifier, p.upperThHumidifier);
 
     Serial.begin(Config::BAUDRATE_SERIAL);
     // Initialize: SSID, Password, Path to HTML
@@ -70,9 +71,11 @@ void loop() {
 
         // Get values of the sensor
         handleSensorData(json_data);
+        String hum = json_data["hum"];
 
         // Update controller
-        humidifier.update (json_data["hum"].toFloat());
+        humidifier.update (hum.toFloat());
+        handleHumidifierData (json_data);
 
         // Write data
         wifi_manager.broadcastData(json_data);
@@ -85,6 +88,8 @@ void handleWebCommand(String type, String msg) {
     Serial.println("Command received: " + msg);
     if(msg == "toggle_relay") {
         // Code to manually override relay
+        humidifier.setMode (ControllerMode::MANUAL);
+        humidifier.tonggleManualPower ();
     }
 }
 
@@ -100,4 +105,8 @@ bool handleSensorData(JsonDocument & data) {
         Serial.println("Error on sensor");
         return false;
     }
+}
+
+void handleHumidifierData(JsonDocument & data) {
+    data["relayState"] = humidifier.isActive();
 }

@@ -23,7 +23,7 @@ namespace Config {
     // Hardware Pins
     constexpr int PIN_SDA = 21;
     constexpr int PIN_SCL = 22;
-    constexpr int PIN_HUM = 13;
+    constexpr int PIN_HUM =  2;
     
     // Default WiFi Settings
     const char* const DEFAULT_SSID = "Mycelium-Lab";
