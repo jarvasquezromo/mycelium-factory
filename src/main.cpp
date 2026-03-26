@@ -15,10 +15,12 @@
  */
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
 
+#include "types.h"
 #include "config.h"
 #include "params.h"
+#include "DashboardManager.h"
+
 #include "AM2315CSensor.h"
 #include "HotspotServerManager.h"
 #include "HysteresisController.h"
@@ -28,19 +30,21 @@
 ParamManager p;
 // Tempeture and Humidity sensor
 AM2315CSensor sensor(Config::HUM_ADDRESS);
-// Wifi manager
-HotspotServerManager wifi_manager;
 // Humidifier controller
 HysteresisController humidifier(Config::PIN_HUM);
+// Dashboard
+MyceliumDashboard dashboard;
 
 /* Variable Definitions */ 
 // Variables of the program
+MyceliumData data;
 unsigned long lastUpdate = 0;
 
+
 /* Functions Declarations */
-bool handleSensorData(JsonDocument & data);
-void handleHumidifierData(JsonDocument & data);
-void handleWebCommand(String type, String msg);
+bool handleSensorData(MyceliumData & data);
+void handleHumidifierData(MyceliumData & data);
+// void handleWebCommand(String type, String msg);
 
 void setup() {
     // initiate parameter
@@ -50,63 +54,61 @@ void setup() {
     humidifier.begin();
     humidifier.setThresholds (p.lowerThHumidifier, p.upperThHumidifier);
 
+    // Communication
     Serial.begin(Config::BAUDRATE_SERIAL);
-    // Initialize: SSID, Password, Path to HTML
-    wifi_manager.begin(Config::DEFAULT_SSID, Config::DEFAULT_PASS, "/index.html");
-    
-    // Attach the callback function
-    wifi_manager.onCommand(handleWebCommand);
+    // Initialize wifi: SSID, Password
+    WiFi.begin(Config::DEFAULT_SSID, Config::DEFAULT_PASS);
+    while (WiFi.status() != WL_CONNECTED) { delay(500); }
 
     if (!sensor.begin(Config::PIN_SDA, Config::PIN_SCL)) {
         Serial.println("Sensor not found!");
     }
+
+    // Start dashboard
+    dashboard.begin ();
 }
 
 void loop() {
     // Send data every interval
     if (millis() - lastUpdate > Config::SENSOR_INTERVAL) {
-        
-        // Create a JSON
-        JsonDocument json_data;
 
         // Get values of the sensor
-        handleSensorData(json_data);
-        String hum = json_data["hum"];
+        handleSensorData(data);
 
         // Update controller
-        humidifier.update (hum.toFloat());
-        handleHumidifierData (json_data);
+        humidifier.update (data.hum);
+        handleHumidifierData (data);
 
-        // Write data
-        wifi_manager.broadcastData(json_data);
+        // Update dashboard
+        dashboard.refresh (data);
         lastUpdate = millis();
     }
 }
 
 /* Functions definitions */
-void handleWebCommand(String type, String msg) {
-    Serial.println("Command received: " + msg);
-    if(msg == "toggle_relay") {
-        // Code to manually override relay
-        humidifier.setMode (ControllerMode::MANUAL);
-        humidifier.tonggleManualPower ();
-    }
-}
+// void handleWebCommand(String type, String msg) {
+//     Serial.println("Command received: " + msg);
+//     if(msg == "toggle_relay") {
+//         // Code to manually override relay
+//         humidifier.setMode (ControllerMode::MANUAL);
+//         humidifier.tonggleManualPower ();
+//     }
+// }
 
-bool handleSensorData(JsonDocument & data) {
+bool handleSensorData(MyceliumData & data) {
     if (sensor.readSample() == ESP_OK) {
-        data["temp"] = String(sensor.getTemperature(), 1);
-        data["hum"] = String(sensor.getHumidity(), 1);
-        data["status"] = "ok";
+        data.temp = sensor.getTemperature();
+        data.hum = sensor.getHumidity();
+        data.status = "ok";
 
         return true;
     } else {
-        data["status"] = "error";
+        data.status = "error";
         Serial.println("Error on sensor");
         return false;
     }
 }
 
-void handleHumidifierData(JsonDocument & data) {
-    data["relayState"] = humidifier.isActive();
+void handleHumidifierData(MyceliumData & data) {
+    data.hum_state = humidifier.isActive();
 }
