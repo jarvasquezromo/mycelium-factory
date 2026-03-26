@@ -37,6 +37,7 @@ private:
     dash::HumidityCard<float, 2>        humCard;
     dash::FeedbackCard<dash::string>    fanStatus;
     dash::ToggleButtonCard              heaterToggle;
+    dash::IndicatorCard                  humidifierStatus;
 
 public:
     MyceliumDashboard() : 
@@ -45,7 +46,8 @@ public:
         tempCard(dashboard, "Inside Temperature"),
         humCard(dashboard, "Air Humidity"),
         fanStatus(dashboard, "System Status", dash::Status::NONE, "success"),
-        heaterToggle(dashboard, "Manual Heater") 
+        heaterToggle(dashboard, "Manual Heater"),
+        humidifierStatus(dashboard, "Humidifier Status")
     {}
 
     void begin() {
@@ -58,6 +60,7 @@ public:
     void refresh(MyceliumData& data) {
         tempCard.setValue(data.temp);
         humCard.setValue(data.hum);
+        humidifierStatus.setValue(data.hum_state ? "ON" : "OFF");
         
         fanStatus.setFeedback("success", dash::Status::INFO);
         dashboard.sendUpdates();
